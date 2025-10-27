@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>My first Map </title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .popup-image {
+      max-width: 200px;
+      height: auto;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZG9tbGV0IiwiYSI6ImNsanp3a24xeDAxMjMzZGxpeDY3MWZpMXkifQ.4TIVDbum8xmIdzokCod3Ww';
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/papajones82/cmgsjfwqn007m01sv65t70861',
+      center: [-122.2708, 37.8044], // Centered on Oakland
+      zoom: 10
+    });
+
+    map.on('load', () => {
+      map.addSource('my-places', {
+        'type': 'geojson',
+        'data': {
+          'type': 'FeatureCollection',
+          'features': [
+            {
+              'type': 'Feature',
+              'geometry': {
+                'type': 'Point',
+                'coordinates': [-122.2587, 37.8044], // Lake Merritt, Oakland
+              },
+              "properties": {
+                'name': "my first popup",
+                'description': "I went jogging around Lake Merritt here",
+                'image': "https://res.cloudinary.com/simpleview/image/upload/v1511807154/clients/oakland-redesign/neighborhood_lakemerritt_1_61794709-9bfd-4bed-9117-e17ef222bd92.jpg"
+              }
+            },
+            {
+              'type': 'Feature',
+              'geometry': {
+                'type': 'Point',
+                'coordinates': [-122.4194, 37.7749], // Golden Gate Bridge, SF
+              },
+              "properties": {
+                'name': "my 2nd popup",
+                'description': "I visited the Golden Gate Bridge here",
+                'image': "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzsa39Ct_wlG-0JAPqMIuZOyiJisvdO_Df_Q&s"
+              }
+            },
+            {
+              'type': 'Feature',
+              'geometry': {
+                'type': 'Point',
+                'coordinates': [-122.4034, 37.7699], // Exploratorium, SF
+              },
+              "properties": {
+                'name': "my 3rd popup",
+                'description': "I explored the Bubble Museum at Exploratorium here",
+                'image': "https://bubble-planet.com/_astro/PYC03764_udut37_vsFf6.png"
+              }
+            }
+          ]
+        }
+      });
+
+      map.addLayer({
+        'id': 'my-places',
+        'type': 'circle',
+        'source': 'my-places',
+        'paint': {
+          'circle-radius': 6,
+          'circle-color': '#27F580'
+        },
+        'filter': ['==', '$type', 'Point']
+      });
+    });
+
+    map.on('click', 'my-places', (e) => {
+      // Copy coordinates array.
+      const coordinates = e.features[0].geometry.coordinates.slice();
+      const name = e.features[0].properties.name;
+      const description = e.features[0].properties.description;
+      const image = e.features[0].properties.image;
+      
+      // Ensure that if the map is zoomed out such that multiple
+      // copies of the feature are visible, the popup appears
+      // over the copy being pointed to.
+      while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+      }
+      
+      let popupHTML = "<strong>" + name + "</strong><br/>" + description;
+      if (image) {
+        popupHTML += "<br/><img src='" + image + "' alt='Location photo' class='popup-image'>";
+      }
+
+      new mapboxgl.Popup()
+        .setLngLat(coordinates)
+        .setHTML(popupHTML)
+        .addTo(map);
+    });
+
+    // Change the cursor to a pointer when the mouse is over the places layer.
+    map.on('mouseenter', 'my-places', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    
+    // Change it back to a pointer when it leaves.
+    map.on('mouseleave', 'my-places', () => {
+      map.getCanvas().style.cursor = '';
+    });
+
+  </script>
+
+</body>
+
+</html>
